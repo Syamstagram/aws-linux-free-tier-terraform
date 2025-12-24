@@ -13,7 +13,7 @@ terraform {
 
 # AWS Provider Configuration
 provider "aws" {
-  region = var.aws_region
+  region = "us-east-1"
 }
 
 # Data: Default VPC
@@ -33,7 +33,7 @@ data "aws_subnets" "default" {
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
-
+  
   filter {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
@@ -95,39 +95,39 @@ resource "aws_instance" "linux_free_tier" {
               #!/bin/bash
               yum update -y
               yum install -y htop git curl wget docker
-
+              
               # Start Docker
               systemctl start docker
               systemctl enable docker
               usermod -a -G docker ec2-user
-
+              
               # Install AWS CLI v2
               curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
               unzip awscliv2.zip
               ./aws/install
-
+              
               # Create welcome message
               cat > /home/ec2-user/welcome.txt << 'EOL'
               Welcome to your Free Tier Linux Instance!
-
+              
               Instance Details:
               - Instance Type: t2.micro (Free Tier)
               - AMI: Amazon Linux 2
               - Created: $(date)
-
+              
               Pre-installed Software:
               - Docker
               - AWS CLI v2
               - Git, curl, wget, htop
-
+              
               Quick Commands:
               - docker --version
               - aws --version
               - htop (system monitor)
-
+              
               Happy coding!
 EOL
-
+              
               chown ec2-user:ec2-user /home/ec2-user/welcome.txt
               EOF
 
