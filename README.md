@@ -1,2 +1,231 @@
-# aws-linux-free-tier-terraform
-Terraform configuration to deploy a free tier Linux EC2 instance on AWS with complete infrastructure setup
+# AWS Free Tier Linux EC2 Instance - Terraform
+
+🚀 **Automated by Adps AI** - Complete Terraform configuration to deploy a free tier Linux EC2 instance on AWS with monitoring, security, and best practices built-in.
+
+## 📋 Features
+
+✅ **Free Tier Optimized**
+- t2.micro instance (750 hours/month free)
+- 8GB EBS storage (up to 30GB free)
+- Amazon Linux 2 (latest AMI)
+
+✅ **Security Built-in**
+- Security groups with SSH, HTTP, HTTPS access
+- Optional SSH key pair creation
+- Encrypted EBS volumes
+- Configurable SSH access restrictions
+
+✅ **Monitoring & Logging**
+- CloudWatch alarms for CPU and status checks
+- Log group for instance logs
+- AWS Console quick links
+
+✅ **Pre-installed Software**
+- Docker (configured and running)
+- AWS CLI v2
+- Development tools: git, curl, wget, htop
+
+## 🛠️ Prerequisites
+
+1. **AWS CLI configured** with your credentials
+2. **Terraform installed** (>= 1.0)
+3. **Optional**: SSH key pair for secure access
+
+### Install Prerequisites
+
+```bash
+# Install Terraform (macOS)
+brew install terraform
+
+# Install Terraform (Ubuntu/Debian)
+wget https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip
+unzip terraform_1.6.6_linux_amd64.zip
+sudo mv terraform /usr/local/bin/
+
+# Configure AWS CLI
+aws configure
+```
+
+## 🚀 Quick Start
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/Syamstagram/aws-linux-free-tier-terraform.git
+cd aws-linux-free-tier-terraform
+```
+
+### 2. Configure Variables
+```bash
+# Copy example variables
+cp terraform.tfvars.example terraform.tfvars
+
+# Edit variables (optional)
+nano terraform.tfvars
+```
+
+### 3. Deploy Infrastructure
+```bash
+# Initialize Terraform
+terraform init
+
+# Plan deployment
+terraform plan
+
+# Apply configuration
+terraform apply
+```
+
+### 4. Connect to Instance
+```bash
+# Get connection details
+terraform output
+
+# Connect via SSH (if key configured)
+ssh -i ~/.ssh/your-key ec2-user@$(terraform output -raw public_ip)
+
+# Or use EC2 Instance Connect in AWS Console
+```
+
+## 📁 Project Structure
+
+```
+aws-linux-free-tier-terraform/
+├── main.tf                 # Main infrastructure configuration
+├── variables.tf            # Input variables
+├── outputs.tf             # Output values
+├── terraform.tfvars.example # Example configuration
+├── README.md              # This file
+└── .gitignore            # Git ignore patterns
+```
+
+## ⚙️ Configuration Options
+
+### Key Variables
+
+| Variable | Description | Default | Free Tier |
+|----------|-------------|---------|-----------|
+| `aws_region` | AWS region | `us-east-1` | ✅ |
+| `instance_type` | EC2 instance type | `t2.micro` | ✅ |
+| `root_volume_size` | EBS volume size (GB) | `8` | ✅ (up to 30GB) |
+| `allowed_ssh_cidr` | SSH access IPs | `["0.0.0.0/0"]` | 🔒 Restrict this! |
+| `public_key_path` | SSH public key path | `""` | Optional |
+
+### Security Best Practices
+
+```hcl
+# terraform.tfvars
+# Restrict SSH to your IP only
+allowed_ssh_cidr = ["YOUR_IP/32"]
+
+# Enable termination protection for production
+enable_termination_protection = true
+
+# Use a dedicated SSH key
+public_key_path = "~/.ssh/aws-linux-key.pub"
+```
+
+## 📊 What Gets Created
+
+- **1x EC2 Instance** (t2.micro) - Free Tier
+- **1x Security Group** - SSH, HTTP, HTTPS access
+- **1x EBS Volume** (8GB encrypted) - Free Tier
+- **2x CloudWatch Alarms** - CPU and status monitoring
+- **1x CloudWatch Log Group** - Instance logs
+- **1x SSH Key Pair** (optional)
+
+## 💰 Cost Breakdown
+
+**Free Tier Usage (12 months):**
+- ✅ **EC2**: 750 hours/month of t2.micro
+- ✅ **EBS**: 30GB of storage
+- ✅ **Data Transfer**: 15GB outbound/month
+- ✅ **CloudWatch**: 10 custom metrics + 10 alarms
+
+**Estimated Monthly Cost: $0.00** (within free tier limits)
+
+## 🔍 Monitoring & Maintenance
+
+### View Instance Status
+```bash
+# Get instance details
+terraform output instance_details
+
+# View AWS Console links
+terraform output aws_console_links
+```
+
+### Common Operations
+```bash
+# Update infrastructure
+terraform apply
+
+# Destroy infrastructure
+terraform destroy
+
+# View current state
+terraform show
+```
+
+## 🛡️ Security Checklist
+
+- [ ] Restrict SSH access to your IP only
+- [ ] Create dedicated SSH key pair
+- [ ] Enable termination protection for production
+- [ ] Regular security updates on the instance
+- [ ] Monitor CloudWatch alarms
+- [ ] Review security group rules regularly
+
+## 🚨 Troubleshooting
+
+### Common Issues
+
+**Issue**: `InvalidAMIID.NotFound`
+- **Solution**: Update region or let Terraform auto-select latest AMI
+
+**Issue**: `UnauthorizedOperation`
+- **Solution**: Check AWS credentials and permissions
+
+**Issue**: `InvalidKeyPair.NotFound`
+- **Solution**: Verify SSH key path or disable key pair creation
+
+### Debug Commands
+```bash
+# Terraform debugging
+export TF_LOG=DEBUG
+terraform apply
+
+# AWS CLI debugging
+aws sts get-caller-identity
+aws ec2 describe-instances
+```
+
+## 🤖 Automation with Adps AI
+
+This infrastructure was generated by **Adps AI** and includes:
+- Automated best practices
+- Security configurations
+- Monitoring setup
+- Cost optimization
+- Documentation
+
+For more automation capabilities, visit [Adps AI Platform](https://adps.ai).
+
+## 📝 License
+
+MIT License - Feel free to modify and use for your projects.
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Submit a pull request
+
+## 📞 Support
+
+- **Issues**: [GitHub Issues](https://github.com/Syamstagram/aws-linux-free-tier-terraform/issues)
+- **Documentation**: This README
+- **AWS Support**: [AWS Free Tier Documentation](https://aws.amazon.com/free/)
+
+---
+
+**Created by Adps AI** 🤖 - Automating your DevOps journey!
