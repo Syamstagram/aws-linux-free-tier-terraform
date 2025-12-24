@@ -1,0 +1,32 @@
+# Example Terraform Variables Configuration
+# Copy this file to terraform.tfvars and modify as needed
+
+# AWS Configuration
+aws_region = "us-east-1"  # Change to your preferred region
+
+# Instance Configuration
+instance_name = "Linux-Free-Tier"
+instance_type = "t2.micro"  # Free tier eligible
+environment   = "development"
+
+# Security Configuration
+# IMPORTANT: Change this to your IP for better security
+# Get your IP: curl -s ifconfig.me
+allowed_ssh_cidr = ["0.0.0.0/0"]  # ["YOUR_IP/32"]
+
+# SSH Key Configuration (optional)
+# If you have an SSH key, provide the path to your public key
+# public_key_path = "~/.ssh/id_rsa.pub"
+public_key_path = ""
+
+# Storage Configuration
+root_volume_size = 8  # GB (Free tier allows up to 30GB)
+
+# Application Configuration
+custom_port = 8080  # Port for your applications
+
+# Protection Settings
+enable_termination_protection = false  # Set to true for production
+
+# Logging Configuration
+log_retention_days = 7  # CloudWatch log retention
