@@ -1,5 +1,5 @@
-# AWS Free Tier Linux EC2 Instance Terraform Configuration
-# Created by Adps AI for automated infrastructure deployment
+# AWS Free Tier Linux EC2 Instance - Terraform Configuration
+# Automated Infrastructure Deployment by Adps AI
 
 terraform {
   required_version = ">= 1.0"
@@ -11,26 +11,17 @@ terraform {
   }
 }
 
-# Configure AWS Provider
+# AWS Provider Configuration
 provider "aws" {
   region = var.aws_region
-  
-  default_tags {
-    tags = {
-      Project     = "AWS Free Tier Linux"
-      Environment = var.environment
-      CreatedBy   = "Adps-AI"
-      Owner       = "Admin-Syam"
-    }
-  }
 }
 
-# Data source for default VPC
+# Data: Default VPC
 data "aws_vpc" "default" {
   default = true
 }
 
-# Data source for default subnets
+# Data: Default Subnets
 data "aws_subnets" "default" {
   filter {
     name   = "vpc-id"
@@ -38,7 +29,7 @@ data "aws_subnets" "default" {
   }
 }
 
-# Data source for latest Amazon Linux 2 AMI
+# Data: Latest Amazon Linux 2 AMI
 data "aws_ami" "amazon_linux" {
   most_recent = true
   owners      = ["amazon"]
@@ -47,61 +38,40 @@ data "aws_ami" "amazon_linux" {
     name   = "name"
     values = ["amzn2-ami-hvm-*-x86_64-gp2"]
   }
-  
-  filter {
-    name   = "virtualization-type"
-    values = ["hvm"]
-  }
 }
 
-# Data source for current AWS caller identity
-data "aws_caller_identity" "current" {}
-
-# Security Group for EC2 Instance
+# Security Group for EC2
 resource "aws_security_group" "linux_sg" {
-  name_prefix = "${var.instance_name}-sg-"
-  description = "Security group for ${var.instance_name} instance"
+  name_prefix = "linux-free-tier-"
+  description = "Security group for Linux free tier instance"
   vpc_id      = data.aws_vpc.default.id
 
-  # SSH access
+  # SSH Access
   ingress {
-    description = "SSH"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = var.allowed_ssh_cidr
+    cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTP access
+  # HTTP Access
   ingress {
-    description = "HTTP"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # HTTPS access
+  # HTTPS Access
   ingress {
-    description = "HTTPS"
     from_port   = 443
     to_port     = 443
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  # Custom port for applications (optional)
-  ingress {
-    description = "Custom App Port"
-    from_port   = var.custom_port
-    to_port     = var.custom_port
-    protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  # All outbound traffic
+  # All Outbound
   egress {
-    description = "All outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -109,109 +79,82 @@ resource "aws_security_group" "linux_sg" {
   }
 
   tags = {
-    Name = "${var.instance_name}-security-group"
+    Name = "linux-free-tier-sg"
   }
 }
 
-# Create Key Pair (optional - only if key is provided)
-resource "aws_key_pair" "linux_key" {
-  count      = var.public_key_path != "" ? 1 : 0
-  key_name   = "${var.instance_name}-key"
-  public_key = file(var.public_key_path)
-  
-  tags = {
-    Name = "${var.instance_name}-key-pair"
-  }
-}
-
-# EC2 Instance - Free Tier Linux
+# EC2 Instance - Free Tier
 resource "aws_instance" "linux_free_tier" {
   ami                         = data.aws_ami.amazon_linux.id
-  instance_type               = var.instance_type
-  key_name                    = var.public_key_path != "" ? aws_key_pair.linux_key[0].key_name : null
+  instance_type               = "t2.micro"
   vpc_security_group_ids      = [aws_security_group.linux_sg.id]
   subnet_id                   = tolist(data.aws_subnets.default.ids)[0]
   associate_public_ip_address = true
 
-  root_block_device {
-    volume_type           = "gp3"
-    volume_size           = var.root_volume_size
-    encrypted             = true
-    delete_on_termination = true
-    
-    tags = {
-      Name = "${var.instance_name}-root-volume"
-    }
-  }
-
-  user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    instance_name = var.instance_name
-    environment   = var.environment
-    custom_port   = var.custom_port
-  }))
+  user_data = <<-EOF
+              #!/bin/bash
+              yum update -y
+              yum install -y htop git curl wget docker
+              
+              # Start Docker
+              systemctl start docker
+              systemctl enable docker
+              usermod -a -G docker ec2-user
+              
+              # Install AWS CLI v2
+              curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+              unzip awscliv2.zip
+              ./aws/install
+              
+              # Create welcome message
+              cat > /home/ec2-user/welcome.txt << 'EOL'
+              Welcome to your Free Tier Linux Instance!
+              
+              Instance Details:
+              - Instance Type: t2.micro (Free Tier)
+              - AMI: Amazon Linux 2
+              - Created: $(date)
+              
+              Pre-installed Software:
+              - Docker
+              - AWS CLI v2
+              - Git, curl, wget, htop
+              
+              Quick Commands:
+              - docker --version
+              - aws --version
+              - htop (system monitor)
+              
+              Happy coding!
+EOL
+              
+              chown ec2-user:ec2-user /home/ec2-user/welcome.txt
+              EOF
 
   tags = {
-    Name        = var.instance_name
-    Environment = var.environment
-    Purpose     = "Free-Tier-Development"
-  }
-
-  # Prevent accidental termination
-  disable_api_termination = var.enable_termination_protection
-  
-  lifecycle {
-    create_before_destroy = true
+    Name        = "Linux-Free-Tier-Instance"
+    Environment = "Development"
+    CreatedBy   = "Adps-AI"
   }
 }
 
-# CloudWatch Log Group for instance logs
-resource "aws_cloudwatch_log_group" "instance_logs" {
-  name              = "/aws/ec2/${var.instance_name}"
-  retention_in_days = var.log_retention_days
-  
-  tags = {
-    Name = "${var.instance_name}-logs"
-  }
+# Outputs
+output "instance_id" {
+  description = "ID of the EC2 instance"
+  value       = aws_instance.linux_free_tier.id
 }
 
-# CloudWatch Alarm for CPU utilization
-resource "aws_cloudwatch_metric_alarm" "high_cpu" {
-  alarm_name          = "${var.instance_name}-high-cpu"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "CPUUtilization"
-  namespace           = "AWS/EC2"
-  period              = "300"
-  statistic           = "Average"
-  threshold           = "80"
-  alarm_description   = "This metric monitors ec2 cpu utilization"
-  
-  dimensions = {
-    InstanceId = aws_instance.linux_free_tier.id
-  }
-  
-  tags = {
-    Name = "${var.instance_name}-cpu-alarm"
-  }
+output "public_ip" {
+  description = "Public IP of the instance"
+  value       = aws_instance.linux_free_tier.public_ip
 }
 
-# CloudWatch Alarm for Status Check
-resource "aws_cloudwatch_metric_alarm" "instance_status_check" {
-  alarm_name          = "${var.instance_name}-status-check"
-  comparison_operator = "GreaterThanThreshold"
-  evaluation_periods  = "2"
-  metric_name         = "StatusCheckFailed_Instance"
-  namespace           = "AWS/EC2"
-  period              = "300"
-  statistic           = "Maximum"
-  threshold           = "0"
-  alarm_description   = "This metric monitors instance status check"
-  
-  dimensions = {
-    InstanceId = aws_instance.linux_free_tier.id
-  }
-  
-  tags = {
-    Name = "${var.instance_name}-status-alarm"
-  }
+output "public_dns" {
+  description = "Public DNS of the instance"
+  value       = aws_instance.linux_free_tier.public_dns
+}
+
+output "ssh_command" {
+  description = "SSH command to connect"
+  value       = "ssh -i your-key.pem ec2-user@${aws_instance.linux_free_tier.public_ip}"
 }
